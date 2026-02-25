@@ -9,10 +9,17 @@ to pass structured data to the next agent in the pipeline.
 """
 from __future__ import annotations
 
-from agents import Agent, handoff
+from agents import Agent, RunContextWrapper, handoff
 
 from classification.prompts import CLASSIFICATION_PROMPT
 from classification.schema import ClassificationResult
+
+
+def _on_classification_handoff(
+    ctx: RunContextWrapper, input_data: ClassificationResult
+) -> None:
+    """No-op handoff callback. The SDK requires on_handoff when input_type is set."""
+    pass
 
 
 def get_classification_agent() -> Agent:
@@ -34,6 +41,7 @@ def get_classification_agent() -> Agent:
         handoffs=[
             handoff(
                 agent=analysis_agent,
+                on_handoff=_on_classification_handoff,
                 input_type=ClassificationResult,
                 tool_name_override="hand_off_to_strategic_analyst",
                 tool_description_override=(
