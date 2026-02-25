@@ -137,3 +137,71 @@ class TestAnalysisSchema:
         )
         assert output.product_name == "TestApp"
         assert output.html_report is None  # not set by LLM
+
+
+
+
+class TestOrchestrator:
+    """Tests for orchestrator.py — mocked Runner."""
+
+    def test_run_kano_pipeline_returns_kano_output(self, monkeypatch):
+        from unittest.mock import MagicMock, patch
+        from analysis.schema import KanoInput, KanoOutput, Roadmap, Feature, ClassifiedFeatureWithCoefficients
+        from classification.schema import KanoCategory
+        from orchestrator import run_kano_pipeline
+
+        mock_output = KanoOutput(
+            product_name="TestApp",
+            features=[
+                ClassifiedFeatureWithCoefficients(
+                    id="feat-001",
+                    name="Login",
+                    category=KanoCategory.MUST_BE,
+                    reasoning="Required for access.",
+                    satisfaction_coefficient=0.1,
+                    dissatisfaction_coefficient=-0.9,
+                )
+            ],
+            summary={"Must-be": 1},
+            roadmap=Roadmap(
+                immediate_priorities=["Login"],
+                performance_investments=[],
+                innovation_bets=[],
+                deprioritize=[],
+            ),
+            strategic_narrative="Implement login immediately.",
+        )
+
+        mock_result = MagicMock()
+        mock_result.final_output = mock_output
+
+        with patch("orchestrator.get_classification_agent", return_value=MagicMock()), \
+             patch("orchestrator.Runner.run_sync", return_value=mock_result):
+            kano_input = KanoInput(
+                product_name="TestApp",
+                product_description="A test application",
+                features=[Feature(id="feat-001", name="Login", description="User login")],
+            )
+            result = run_kano_pipeline(kano_input)
+
+        assert isinstance(result, KanoOutput)
+        assert result.product_name == "TestApp"
+        assert len(result.features) == 1
+
+    def test_run_kano_pipeline_raises_on_wrong_output_type(self):
+        from unittest.mock import MagicMock, patch
+        from analysis.schema import KanoInput, Feature
+        from orchestrator import run_kano_pipeline
+
+        mock_result = MagicMock()
+        mock_result.final_output = "not a KanoOutput"
+
+        with patch("orchestrator.get_classification_agent", return_value=MagicMock()), \
+             patch("orchestrator.Runner.run_sync", return_value=mock_result):
+            kano_input = KanoInput(
+                product_name="X",
+                product_description="Y",
+                features=[Feature(id="f1", name="F", description="D")],
+            )
+            with pytest.raises(RuntimeError, match="KanoOutput"):
+                run_kano_pipeline(kano_input)
