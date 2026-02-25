@@ -1,0 +1,57 @@
+{
+  "product_name": "TaskFlow",
+  "product_description": "A project management SaaS platform for software development teams that integrates task tracking, code review workflows, and team collaboration in a single workspace.",
+  "target_market": "Software development teams at mid-size technology companies (50–500 employees)",
+  "features": [
+    {
+      "id": "f01",
+      "name": "Task creation and assignment",
+      "description": "Create tasks, set due dates, assign them to team members, and track their status through a Kanban board or list view."
+    },
+    {
+      "id": "f02",
+      "name": "GitHub/GitLab integration",
+      "description": "Automatically link pull requests and commits to tasks, updating task status when a PR is merged or a branch is created."
+    },
+    {
+      "id": "f03",
+      "name": "AI-powered task decomposition",
+      "description": "Use AI to break down a high-level feature description into concrete sub-tasks with effort estimates and suggested assignees based on past work patterns."
+    },
+    {
+      "id": "f04",
+      "name": "Real-time collaborative editing",
+      "description": "Multiple team members can simultaneously edit task descriptions, comments, and acceptance criteria with live cursors, similar to Google Docs."
+    },
+    {
+      "id": "f05",
+      "name": "Sprint planning and velocity tracking",
+      "description": "Plan two-week sprints, assign story points, and track team velocity over time with burndown charts and sprint retrospective templates."
+    },
+    {
+      "id": "f06",
+      "name": "Email and Slack notifications",
+      "description": "Send configurable notifications when tasks are assigned, updated, or overdue via email and Slack integration."
+    },
+    {
+      "id": "f07",
+      "name": "Custom workflow automation",
+      "description": "Define no-code automation rules such as 'when a PR is merged, move the linked task to Done and notify the reporter'."
+    },
+    {
+      "id": "f08",
+      "name": "Dark mode",
+      "description": "Toggle between light and dark visual themes across the entire application interface."
+    },
+    {
+      "id": "f09",
+      "name": "Mandatory two-factor authentication",
+      "description": "Enforce two-factor authentication for all team members as a security requirement that cannot be disabled by individual users."
+    },
+    {
+      "id": "f10",
+      "name": "Gamification and achievement badges",
+      "description": "Award badges and points to team members for completing tasks, closing bugs, or writing documentation, with a leaderboard visible to the whole team."
+    }
+  ]
+}
