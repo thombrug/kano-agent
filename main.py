@@ -9,6 +9,10 @@ import sys
 from datetime import date
 from pathlib import Path
 
+# Load .env from the project root (silently ignored if absent)
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).parent / ".env")
+
 from analysis.schema import KanoInput
 from orchestrator import run_kano_pipeline
 from report.renderer import render_report
