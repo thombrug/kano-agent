@@ -205,3 +205,68 @@ class TestOrchestrator:
             )
             with pytest.raises(RuntimeError, match="KanoOutput"):
                 run_kano_pipeline(kano_input)
+
+
+class TestReportRenderer:
+    def test_render_report_returns_html_string(self):
+        """render_report returns a string containing DOCTYPE and product name."""
+        from report.renderer import render_report
+        from analysis.schema import (
+            KanoOutput, ClassifiedFeatureWithCoefficients, Roadmap, KanoCategory
+        )
+        feature = ClassifiedFeatureWithCoefficients(
+            id="f1",
+            name="Dark Mode",
+            category=KanoCategory.ATTRACTIVE,
+            reasoning="Users love it",
+            satisfaction_coefficient=0.8,
+            dissatisfaction_coefficient=-0.1,
+        )
+        roadmap = Roadmap(
+            immediate_priorities=[],
+            performance_investments=[],
+            innovation_bets=["Dark Mode"],
+            deprioritize=[],
+        )
+        output = KanoOutput(
+            product_name="TestApp",
+            features=[feature],
+            summary={"Attractive": 1, "One-dimensional": 0, "Must-be": 0, "Indifferent": 0, "Reverse": 0},
+            roadmap=roadmap,
+            strategic_narrative="Focus on attractive features.",
+        )
+        html = render_report(output)
+        assert isinstance(html, str)
+        assert "<!DOCTYPE html>" in html
+        assert "TestApp" in html
+        assert "Must-be" in html  # category header always present in template
+
+    def test_render_report_includes_feature_name(self):
+        """render_report includes feature names in the HTML output."""
+        from report.renderer import render_report
+        from analysis.schema import (
+            KanoOutput, ClassifiedFeatureWithCoefficients, Roadmap, KanoCategory
+        )
+        feature = ClassifiedFeatureWithCoefficients(
+            id="f2",
+            name="Dark Mode Feature",
+            category=KanoCategory.MUST_BE,
+            reasoning="Required for usability",
+            satisfaction_coefficient=0.3,
+            dissatisfaction_coefficient=-0.7,
+        )
+        roadmap = Roadmap(
+            immediate_priorities=["Dark Mode Feature"],
+            performance_investments=[],
+            innovation_bets=[],
+            deprioritize=[],
+        )
+        output = KanoOutput(
+            product_name="AnotherApp",
+            features=[feature],
+            summary={"Attractive": 0, "One-dimensional": 0, "Must-be": 1, "Indifferent": 0, "Reverse": 0},
+            roadmap=roadmap,
+            strategic_narrative="Focus on must-be features.",
+        )
+        html = render_report(output)
+        assert "Dark Mode Feature" in html

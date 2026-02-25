@@ -15,7 +15,17 @@ from __future__ import annotations
 
 from pydantic import BaseModel, field_validator
 
-from classification.schema import ClassifiedFeature
+from classification.schema import ClassifiedFeature, KanoCategory
+
+__all__ = [
+    "ClassifiedFeature",
+    "KanoCategory",
+    "Feature",
+    "KanoInput",
+    "ClassifiedFeatureWithCoefficients",
+    "Roadmap",
+    "KanoOutput",
+]
 
 
 class Feature(BaseModel):
