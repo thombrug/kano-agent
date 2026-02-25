@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kano Analysis — {{ product_name }}</title>
+  <style>
+    :root {
+      --attractive: #7c3aed;
+      --one-dim: #2563eb;
+      --must-be: #dc2626;
+      --indifferent: #6b7280;
+      --reverse: #d97706;
+      --bg: #f9fafb;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .header { margin-bottom: 2rem; }
+    .header h1 { font-size: 1.75rem; font-weight: 700; }
+    .header .meta { color: var(--muted); font-size: 0.875rem; margin-top: 0.25rem; }
+    .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .badge-attractive { background: #ede9fe; color: var(--attractive); }
+    .badge-one-dimensional { background: #dbeafe; color: var(--one-dim); }
+    .badge-must-be { background: #fee2e2; color: var(--must-be); }
+    .badge-indifferent { background: #f3f4f6; color: var(--indifferent); }
+    .badge-reverse { background: #fef3c7; color: var(--reverse); }
+    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .summary-card { background: var(--card); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1.25rem; }
+    .summary-card .count { font-size: 2rem; font-weight: 700; }
+    .summary-card .label { font-size: 0.8rem; color: var(--muted); margin-top: 0.15rem; }
+    .card-attractive .count { color: var(--attractive); }
+    .card-one-dimensional .count { color: var(--one-dim); }
+    .card-must-be .count { color: var(--must-be); }
+    .card-indifferent .count { color: var(--indifferent); }
+    .card-reverse .count { color: var(--reverse); }
+    .section { background: var(--card); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .section h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; }
+    .matrix-container { position: relative; width: 100%; max-width: 560px; margin: 0 auto; }
+    .matrix-svg { width: 100%; height: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    th { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 2px solid var(--border); color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
+    td { padding: 0.75rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    .reasoning { color: var(--muted); font-size: 0.8rem; margin-top: 0.2rem; }
+    .coeff { font-family: monospace; font-size: 0.8rem; }
+    .roadmap { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .roadmap-quadrant { border-radius: 0.5rem; padding: 1rem; }
+    .q-immediate { background: #fee2e2; border-left: 4px solid var(--must-be); }
+    .q-performance { background: #dbeafe; border-left: 4px solid var(--one-dim); }
+    .q-innovation { background: #ede9fe; border-left: 4px solid var(--attractive); }
+    .q-deprioritize { background: #f3f4f6; border-left: 4px solid var(--indifferent); }
+    .roadmap-quadrant h3 { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .roadmap-quadrant ul { list-style: none; }
+    .roadmap-quadrant li::before { content: "▸ "; }
+    .roadmap-quadrant li { font-size: 0.875rem; margin-bottom: 0.2rem; }
+    .empty { color: var(--muted); font-style: italic; font-size: 0.8rem; }
+    .narrative { font-size: 0.95rem; line-height: 1.7; color: #374151; }
+    .footer { text-align: center; margin-top: 2rem; font-size: 0.75rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Kano Model Analysis: {{ product_name }}</h1>
+    <div class="meta">
+      {{ analysis_date }} · {{ features | length }} features analyzed
+      {% if target_market %} · Target: {{ target_market }}{% endif %}
+    </div>
+  </div>
+
+  <div class="summary">
+    <div class="summary-card card-attractive">
+      <div class="count">{{ summary.get("Attractive", 0) }}</div>
+      <div class="label">Attractive</div>
+    </div>
+    <div class="summary-card card-one-dimensional">
+      <div class="count">{{ summary.get("One-dimensional", 0) }}</div>
+      <div class="label">One-dimensional</div>
+    </div>
+    <div class="summary-card card-must-be">
+      <div class="count">{{ summary.get("Must-be", 0) }}</div>
+      <div class="label">Must-be</div>
+    </div>
+    <div class="summary-card card-indifferent">
+      <div class="count">{{ summary.get("Indifferent", 0) }}</div>
+      <div class="label">Indifferent</div>
+    </div>
+    <div class="summary-card card-reverse">
+      <div class="count">{{ summary.get("Reverse", 0) }}</div>
+      <div class="label">Reverse</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Kano Matrix — Satisfaction vs. Dissatisfaction Coefficients</h2>
+    <div class="matrix-container">
+      <svg class="matrix-svg" viewBox="0 0 540 400" xmlns="http://www.w3.org/2000/svg">
+        <rect x="40" y="10" width="240" height="180" fill="#f5f3ff" opacity="0.5"/>
+        <rect x="280" y="10" width="240" height="180" fill="#ede9fe" opacity="0.5"/>
+        <rect x="40" y="210" width="240" height="160" fill="#f3f4f6" opacity="0.5"/>
+        <rect x="280" y="210" width="240" height="160" fill="#fee2e2" opacity="0.5"/>
+        <line x1="40" y1="380" x2="520" y2="380" stroke="#9ca3af" stroke-width="1.5"/>
+        <line x1="40" y1="10" x2="40" y2="380" stroke="#9ca3af" stroke-width="1.5"/>
+        <text x="280" y="398" text-anchor="middle" fill="#6b7280" font-size="12">Satisfaction Coefficient (CS) →</text>
+        <text x="14" y="200" text-anchor="middle" fill="#6b7280" font-size="12" transform="rotate(-90 14 200)">|Dissatisfaction| →</text>
+        <text x="160" y="30" text-anchor="middle" fill="#7c3aed" font-size="10" font-weight="600">INNOVATION BETS</text>
+        <text x="400" y="30" text-anchor="middle" fill="#2563eb" font-size="10" font-weight="600">PERFORMANCE</text>
+        <text x="160" y="220" text-anchor="middle" fill="#6b7280" font-size="10" font-weight="600">DEPRIORITIZE</text>
+        <text x="400" y="220" text-anchor="middle" fill="#dc2626" font-size="10" font-weight="600">IMMEDIATE</text>
+        {% set color_map = {
+          "Attractive": "#7c3aed",
+          "One-dimensional": "#2563eb",
+          "Must-be": "#dc2626",
+          "Indifferent": "#6b7280",
+          "Reverse": "#d97706"
+        } %}
+        {% for f in features %}
+          {% set cx = (40 + f.satisfaction_coefficient * 480) | int %}
+          {% set cy = (380 - (f.dissatisfaction_coefficient | abs) * 360) | int %}
+          {% set color = color_map.get(f.category, "#6b7280") %}
+          <circle cx="{{ cx }}" cy="{{ cy }}" r="8" fill="{{ color }}" opacity="0.85"/>
+          <text x="{{ cx + 10 }}" y="{{ cy + 4 }}" fill="{{ color }}" font-size="10">{{ f.name[:18] }}</text>
+        {% endfor %}
+      </svg>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Feature Classification Details</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Category</th>
+          <th>CS</th>
+          <th>DS</th>
+          <th>Reasoning</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in features %}
+        {% set cat_key = f.category | lower | replace(" ", "-") %}
+        <tr>
+          <td><strong>{{ f.name }}</strong><div class="reasoning">{{ f.id }}</div></td>
+          <td><span class="badge badge-{{ cat_key }}">{{ f.category }}</span></td>
+          <td class="coeff">{{ "%.3f" | format(f.satisfaction_coefficient) }}</td>
+          <td class="coeff">{{ "%.3f" | format(f.dissatisfaction_coefficient) }}</td>
+          <td class="reasoning">{{ f.reasoning }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Product Roadmap</h2>
+    <div class="roadmap">
+      <div class="roadmap-quadrant q-immediate">
+        <h3>🔴 Immediate Priorities</h3>
+        <ul>
+          {% for item in roadmap.immediate_priorities %}
+          <li>{{ item }}</li>
+          {% else %}
+          <li class="empty">No must-be gaps identified</li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="roadmap-quadrant q-performance">
+        <h3>🔵 Performance Investments</h3>
+        <ul>
+          {% for item in roadmap.performance_investments %}
+          <li>{{ item }}</li>
+          {% else %}
+          <li class="empty">No one-dimensional features</li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="roadmap-quadrant q-innovation">
+        <h3>🟣 Innovation Bets</h3>
+        <ul>
+          {% for item in roadmap.innovation_bets %}
+          <li>{{ item }}</li>
+          {% else %}
+          <li class="empty">No attractive features identified</li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="roadmap-quadrant q-deprioritize">
+        <h3>⚫ Deprioritize</h3>
+        <ul>
+          {% for item in roadmap.deprioritize %}
+          <li>{{ item }}</li>
+          {% else %}
+          <li class="empty">No features to deprioritize</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Strategic Narrative</h2>
+    <p class="narrative">{{ strategic_narrative }}</p>
+  </div>
+
+  <div class="footer">
+    Generated by Kano Model Agent · Based on Kano et al. (1984) and Berger et al. (1993) ·
+    DOI: <a href="https://doi.org/10.1016/S0166-4972(97)00020-0">10.1016/S0166-4972(97)00020-0</a>
+  </div>
+</div>
+</body>
+</html>
