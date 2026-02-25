@@ -1,0 +1,228 @@
+name: kano-agent
+title: Kano Model Feature Prioritization Agent
+description: >
+  Classifies product features using the Kano Model and generates a prioritized
+  development roadmap with Berger Coefficient of Satisfaction (CS) and
+  Coefficient of Dissatisfaction (DS) scores. Given a product description and
+  list of candidate features, orchestrates hub-and-spoke multi-agent handoffs
+  to survey classification, Berger coefficient computation, and roadmap
+  synthesis. Methodology based on Matzler & Hinterhuber (1998, Technovation),
+  doi:10.1016/S0166-4972(97)00020-0.
+version: 1.0.0
+license: MIT
+tags: [kano-model, product-management, feature-prioritization, roadmap, berger-coefficients]
+
+references:
+  - type: doi
+    id: 10.1016/S0166-4972(97)00020-0
+    description: "Matzler & Hinterhuber (1998) — How to make product development projects more successful by integrating Kano's model of customer satisfaction into quality function deployment. Technovation, 18(1), 25–38."
+
+files:
+  - path: main.py
+    description: CLI entrypoint — reads JSON from stdin or file, orchestrates agents, writes output JSON and HTML report
+  - path: orchestrator.py
+    description: Hub orchestrator agent — routes to classification and analysis sub-agents via handoffs
+  - path: classification/agent.py
+    description: Classification sub-agent — maps features to Kano categories (Must-be, One-dimensional, Attractive, Indifferent, Reverse)
+  - path: classification/schema.py
+    description: Pydantic models for KanoClassificationInput and KanoClassificationOutput
+  - path: classification/prompts.py
+    description: System prompt embedding Kano survey question pairs and classification rules
+  - path: analysis/agent.py
+    description: Analysis sub-agent — computes Berger CS/DS coefficients and prioritizes the feature roadmap
+  - path: analysis/schema.py
+    description: Pydantic models for KanoAnalysisInput, KanoAnalysisOutput, and RoadmapOutput
+  - path: analysis/prompts.py
+    description: System prompt for Berger coefficient calculation and roadmap generation
+  - path: report/renderer.py
+    description: Jinja2-based HTML report renderer for the Kano analysis output
+  - path: report/template.html
+    description: Jinja2 HTML template for the Kano feature prioritization report
+
+fields: ["5.3", "5.8"]
+
+runtime:
+  env:
+    - name: OPENAI_API_KEY
+      required: true
+      description: "OpenAI API key for o4-mini inference"
+  capacity:
+    typical_latency_seconds: 20
+  conventions:
+    - stdin-json
+    - stdout-json
+    - exit-codes
+  test_command: "python main.py --example --json-only"
+
+examples:
+  - label: "Project Management SaaS"
+    input:
+      product_name: "TaskFlow Pro"
+      product_description: "A cloud-based project management tool for small-to-medium software teams."
+      target_market: "Software development teams of 5–50 people"
+      features:
+        - id: "F01"
+          name: "Kanban Board"
+          description: "Drag-and-drop task board with customizable columns and swim lanes"
+        - id: "F02"
+          name: "AI Sprint Planner"
+          description: "Automatically suggests sprint scope based on team velocity and backlog priority"
+        - id: "F03"
+          name: "Real-time Collaboration"
+          description: "Live cursor presence and simultaneous editing on tasks and documents"
+
+input:
+  type: object
+  properties:
+    product_name:
+      type: string
+      description: Name of the product being analyzed (e.g., "TaskFlow Pro")
+    product_description:
+      type: string
+      description: Brief description of the product and its intended use case
+    target_market:
+      type: string
+      description: "Optional: description of the target customer segment"
+    features:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+            description: Unique feature identifier (e.g., "F01")
+          name:
+            type: string
+            description: Short feature name (e.g., "AI Sprint Planner")
+          description:
+            type: string
+            description: One-sentence description of what the feature does
+        required: [id, name, description]
+      description: List of candidate features to classify and prioritize
+  required: [product_name, product_description, features]
+
+output:
+  type: object
+  properties:
+    features:
+      type: array
+      description: List of features with Kano classification and Berger coefficients
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+            description: Feature identifier from input
+          name:
+            type: string
+            description: Feature name from input
+          kano_category:
+            type: string
+            enum: [must-be, one-dimensional, attractive, indifferent, reverse]
+            description: "Kano category: must-be (M), one-dimensional (O), attractive (A), indifferent (I), reverse (R)"
+          cs:
+            type: number
+            description: "Berger Coefficient of Satisfaction (0 to 1): impact on satisfaction when feature is present"
+          ds:
+            type: number
+            description: "Berger Coefficient of Dissatisfaction (-1 to 0): impact on dissatisfaction when feature is absent"
+          priority_score:
+            type: number
+            description: Composite priority score used for roadmap ordering
+          rationale:
+            type: string
+            description: Brief explanation of the classification and priority
+    summary:
+      type: object
+      description: Aggregate counts and statistics across all classified features
+      properties:
+        total_features:
+          type: integer
+          description: Total number of features analyzed
+        must_be_count:
+          type: integer
+          description: Number of Must-be features
+        one_dimensional_count:
+          type: integer
+          description: Number of One-dimensional features
+        attractive_count:
+          type: integer
+          description: Number of Attractive (delighter) features
+        indifferent_count:
+          type: integer
+          description: Number of Indifferent features
+        reverse_count:
+          type: integer
+          description: Number of Reverse features
+    roadmap:
+      type: object
+      description: Prioritized development roadmap organized into four delivery phases
+      properties:
+        now:
+          type: array
+          items:
+            type: string
+          description: "Phase 1 — Must-be features to implement immediately (threshold requirements)"
+        next:
+          type: array
+          items:
+            type: string
+          description: "Phase 2 — High-CS one-dimensional features for next release cycle"
+        later:
+          type: array
+          items:
+            type: string
+          description: "Phase 3 — Attractive delighters with highest CS scores for future investment"
+        consider:
+          type: array
+          items:
+            type: string
+          description: "Phase 4 — Indifferent or low-impact features to deprioritize or reconsider"
+    strategic_narrative:
+      type: string
+      description: 2–4 sentence plain-English explanation of the prioritization strategy and key trade-offs
+    html_report:
+      type: string
+      description: "Optional: self-contained HTML report with Kano classification table and roadmap (suitable for saving to .html file)"
+  required: [features, summary, roadmap, strategic_narrative]
+
+tools:
+  - name: run_kano_analysis
+    description: >
+      Classify product features using the Kano Model and generate a prioritized
+      roadmap with Berger CS/DS coefficients
+    input_schema:
+      type: object
+      properties:
+        product_name:
+          type: string
+          description: Name of the product being analyzed
+        product_description:
+          type: string
+          description: Brief description of the product and its intended use case
+        target_market:
+          type: string
+          description: Optional description of the target customer segment
+        features:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+            required: [id, name, description]
+          description: List of candidate features to classify and prioritize
+      required: [product_name, product_description, features]
+
+dependencies:
+  python:
+    - openai-agents>=0.0.3
+    - pydantic>=2.0.0
+    - jinja2>=3.1.0
+  npm: []
+
+entrypoint: main.py
